@@ -47,9 +47,7 @@ jobs:
         shell: pwsh
         run: |
           $args = @('--noconsole','--onefile','--name','ExpertSampler','--add-data','app.py;.','--collect-all','streamlit')
-          if (Test-Path '.streamlit/config.toml') {
-            $args += @('--add-data','.streamlit\config.toml;.streamlit')
-          }
+          if (Test-Path '.streamlit/config.toml') { $args += @('--add-data','.streamlit\config.toml;.streamlit') }
           $args += 'launcher.py'
           pyinstaller @args
 
@@ -62,5 +60,41 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ExpertSampler-windows-${{ github.run_number }}
+          path: dist/**
+          retention-days: 14
+
+  build-windows-native:
+    runs-on: windows-latest
+    needs: build-windows
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.8"
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build native window EXE (pywebview)
+        shell: pwsh
+        run: |
+          pyinstaller --noconsole --onefile --name ExpertSamplerNative --add-data "app.py;." --add-data ".streamlit\config.toml;.streamlit" native_app.py
+
+      - name: List outputs
+        shell: pwsh
+        run: |
+          Get-ChildItem -Recurse -Force dist | Format-List -Property Name,FullName,Length
+
+      - name: Upload artifact (native)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExpertSamplerNative-windows-${{ github.run_number }}
           path: dist/**
           retention-days: 14
