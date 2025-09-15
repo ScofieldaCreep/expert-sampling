@@ -1,6 +1,11 @@
+[global]
+developmentMode = false
+
 [server]
 headless = true
 runOnSave = false
+port = 8501
+address = "localhost"
 
 [client]
 showErrorDetails = true
