@@ -1,0 +1,49 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.8"
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Generate launcher.py (embed app.py & config)
+        shell: pwsh
+        run: |
+          $app   = [System.IO.File]::ReadAllBytes('app.py')
+          $b64   = [System.Convert]::ToBase64String($app)
+          $tmpl  = Get-Content 'launcher_template.py' -Raw -Encoding UTF8
+          if (Test-Path '.streamlit/config.toml') {
+            $cfg  = [System.IO.File]::ReadAllBytes('.streamlit/config.toml')
+            $cfgb = [System.Convert]::ToBase64String($cfg)
+          } else { $cfgb = '__REPLACE_WITH_CONFIG_BASE64__' }
+          $out = $tmpl.Replace('__REPLACE_WITH_APP_BASE64__', $b64).Replace('__REPLACE_WITH_CONFIG_BASE64__', $cfgb)
+          Set-Content -LiteralPath 'launcher.py' -Value $out -Encoding UTF8
+
+      - name: Build EXE (onefile, no console)
+        shell: pwsh
+        run: |
+          pyinstaller --noconsole --onefile --name ExpertSampler launcher.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExpertSampler-windows
+          path: dist/ExpertSampler.exe
