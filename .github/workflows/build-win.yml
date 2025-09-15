@@ -46,10 +46,12 @@ jobs:
       - name: Build EXE (onefile, no console, add data)
         shell: pwsh
         run: |
-          # 注意：Windows下 --add-data 使用分号作为分隔符
-          $datas = '--add-data "app.py;."'
-          if (Test-Path '.streamlit/config.toml') { $datas = $datas + ' --add-data ".streamlit\\config.toml;.streamlit"' }
-          pyinstaller --noconsole --onefile --name ExpertSampler $datas launcher.py
+          $args = @('--noconsole','--onefile','--name','ExpertSampler','--add-data','app.py;.')
+          if (Test-Path '.streamlit/config.toml') {
+            $args += @('--add-data','.streamlit\config.toml;.streamlit')
+          }
+          $args += 'launcher.py'
+          pyinstaller @args
 
       - name: List outputs
         shell: pwsh
