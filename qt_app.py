@@ -27,13 +27,42 @@ POSSIBLE_COLUMN_ALIASES: Dict[str, List[str]] = {
     "major": ["专业", "专业方向", "Major", "学科", "领域"],
     "phone": ["手机号", "手机", "电话", "联系电话", "Phone", "Mobile", "手机号码", "联系手机"],
     "title": ["职称", "技术职称", "Title", "岗位", "岗位/职称"],
-    "email": ["邮箱", "电子邮箱", "Email", "E-mail"],
+    "email": "邮箱", "电子邮箱", "Email", "E-mail"],
 }
 
 OPTIONAL_ALIASES: Dict[str, List[str]] = {
     "org": ["供职单位", "单位", "工作单位", "所在单位"],
     "reg_org": ["注册单位", "注册单位名称", "注册机构", "注册单位/机构"],
 }
+
+
+def _is_empty_value(v: object) -> bool:
+    s = str(v).strip()
+    return s == "" or s.lower() in {"nan", "none", "null"}
+
+
+def auto_locate_header_by_keyword(df: pd.DataFrame) -> pd.DataFrame:
+    """根据包含“序号”等关键词的行自动定位表头，并以下一行作为数据开始。"""
+    if df is None or df.empty:
+        return df
+    s = df.astype(str).applymap(lambda x: str(x).strip())
+    header_keywords = {"序号", "姓名", "性别", "出生年月", "身份证号", "专业", "手机号码", "手机号", "供职单位", "单位", "职称", "职务", "电子邮箱", "邮箱", "备注"}
+    header_row_idx: Optional[int] = None
+    for i, row in s.iterrows():
+        vals = [v for v in row.tolist() if not _is_empty_value(v)]
+        if not vals:
+            continue
+        if "序号" in vals and len(set(vals) & header_keywords) >= 3:
+            header_row_idx = i
+            break
+    if header_row_idx is None:
+        return df
+    columns = s.iloc[header_row_idx].tolist()
+    columns = [c if not _is_empty_value(c) else f"列{j+1}" for j, c in enumerate(columns)]
+    body = df.iloc[header_row_idx + 1 :].copy()
+    body.columns = columns
+    body.columns = [str(c).strip() for c in body.columns]
+    return body
 
 
 def guess_mapping(df: pd.DataFrame) -> Dict[str, Optional[str]]:
@@ -200,6 +229,8 @@ class App(QWidget):
             QMessageBox.critical(self, "读取失败", str(e))
             return
 
+        # 自动定位表头（查找包含“序号”的表头行）并规范列名
+        df = auto_locate_header_by_keyword(df)
         df.columns = [str(c).strip() for c in df.columns]
         self.df = df
         self.file_label.setText(Path(path).name)
