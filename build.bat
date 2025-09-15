@@ -23,7 +23,11 @@ path.write_text(content, encoding='utf-8')
 print('launcher.py generated')
 PY
 
+REM --add-data 把 app.py 与 config.toml 打到exe资源里作为兜底
+set DATA_ARGS=--add-data "app.py;."
+if exist .streamlit\config.toml set DATA_ARGS=%DATA_ARGS% --add-data ".streamlit\config.toml;.streamlit"
+
 REM --noconsole 去掉黑色控制台窗口，--onefile 单文件
-pyinstaller --noconsole --onefile --name ExpertSampler launcher.py
+pyinstaller --noconsole --onefile --name ExpertSampler %DATA_ARGS% launcher.py
 
 echo Build done: dist\ExpertSampler.exe
