@@ -43,18 +43,30 @@ def write_app_and_config_to_temp() -> str:
 
 
 def main() -> None:
-    # 禁用自动打开默认浏览器，避免读取注册表（BROWSER=none 为官方支持方式）
+    # 禁用自动打开默认浏览器，避免读取注册表
     os.environ.setdefault("BROWSER", "none")
     os.environ.setdefault("STREAMLIT_BROWSER_GATHER_USAGE_STATS", "false")
     os.environ.setdefault("STREAMLIT_SERVER_HEADLESS", "true")
+    os.environ.setdefault("STREAMLIT_SERVER_ADDRESS", "127.0.0.1")
+    os.environ.setdefault("STREAMLIT_SERVER_PORT", "8501")
 
     app_path = write_app_and_config_to_temp()
-    try:
-        from streamlit.web import bootstrap
-        bootstrap.run(app_path, "", [], {})
-    except Exception:
-        import subprocess
-        subprocess.run([sys.executable, "-m", "streamlit", "run", app_path, "--server.headless", "true"], check=True)
+
+    # 直接调用 Streamlit CLI 的入口函数，避免创建子进程导致递归/卡死
+    from streamlit.web.cli import main as st_main
+
+    sys.argv = [
+        "streamlit",
+        "run",
+        app_path,
+        "--server.headless",
+        "true",
+        "--server.address",
+        os.environ.get("STREAMLIT_SERVER_ADDRESS", "127.0.0.1"),
+        "--server.port",
+        os.environ.get("STREAMLIT_SERVER_PORT", "8501"),
+    ]
+    st_main()
 
 
 if __name__ == "__main__":
