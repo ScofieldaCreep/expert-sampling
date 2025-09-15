@@ -42,8 +42,14 @@ jobs:
         run: |
           pyinstaller --noconsole --onefile --name ExpertSampler launcher.py
 
+      - name: List outputs
+        shell: pwsh
+        run: |
+          Get-ChildItem -Recurse -Force dist | Format-List -Property Name,FullName,Length
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ExpertSampler-windows
-          path: dist/ExpertSampler.exe
+          name: ExpertSampler-windows-${{ github.run_number }}
+          path: dist/**
+          retention-days: 14
