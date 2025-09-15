@@ -47,12 +47,10 @@ def main() -> None:
     os.environ.setdefault("BROWSER", "none")
     os.environ.setdefault("STREAMLIT_BROWSER_GATHER_USAGE_STATS", "false")
     os.environ.setdefault("STREAMLIT_SERVER_HEADLESS", "true")
-    os.environ.setdefault("STREAMLIT_SERVER_ADDRESS", "127.0.0.1")
-    os.environ.setdefault("STREAMLIT_SERVER_PORT", "8501")
 
     app_path = write_app_and_config_to_temp()
 
-    # 直接调用 Streamlit CLI 的入口函数，避免创建子进程导致递归/卡死
+    # 直接调用 Streamlit CLI 的入口函数
     from streamlit.web.cli import main as st_main
 
     sys.argv = [
@@ -61,10 +59,6 @@ def main() -> None:
         app_path,
         "--server.headless",
         "true",
-        "--server.address",
-        os.environ.get("STREAMLIT_SERVER_ADDRESS", "127.0.0.1"),
-        "--server.port",
-        os.environ.get("STREAMLIT_SERVER_PORT", "8501"),
     ]
     st_main()
 
