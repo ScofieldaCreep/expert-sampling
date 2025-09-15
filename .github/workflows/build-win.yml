@@ -46,7 +46,7 @@ jobs:
       - name: Build EXE (onefile, no console, add data)
         shell: pwsh
         run: |
-          $args = @('--noconsole','--onefile','--name','ExpertSampler','--add-data','app.py;.')
+          $args = @('--noconsole','--onefile','--name','ExpertSampler','--add-data','app.py;.','--collect-all','streamlit')
           if (Test-Path '.streamlit/config.toml') {
             $args += @('--add-data','.streamlit\config.toml;.streamlit')
           }

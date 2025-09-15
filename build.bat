@@ -23,8 +23,8 @@ path.write_text(content, encoding='utf-8')
 print('launcher.py generated')
 PY
 
-REM --add-data 把 app.py 与 config.toml 打到exe资源里作为兜底
-set DATA_ARGS=--add-data "app.py;."
+REM --add-data 把 app.py 与 config.toml 打到exe资源里作为兜底；--collect-all 收集streamlit元数据
+set DATA_ARGS=--add-data "app.py;." --collect-all streamlit
 if exist .streamlit\config.toml set DATA_ARGS=%DATA_ARGS% --add-data ".streamlit\config.toml;.streamlit"
 
 REM --noconsole 去掉黑色控制台窗口，--onefile 单文件
